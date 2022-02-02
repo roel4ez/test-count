@@ -16,8 +16,8 @@ in the script itself!
 | Name | Default | Description |
 | --- | --- | --- |
 | `gitRepoPath` | | The path to the repository |
-| `e2ePath` | `.\Tests\E2E` | Path to the subdirectory where the e2e tests live |
-| `integrationPath` | `.\Tests\Integration` | Path to the subdirectory where the integration tests live |
-| `unitPath` | `.\Tests\Unit` | Path to the subdirectory where the unit tests live |
+| `e2ePath` | `Tests/E2E` | Path to the subdirectory where the e2e tests live |
+| `integrationPath` | `Tests/Integration` | Path to the subdirectory where the integration tests live |
+| `unitPath` | `Tests/Unit` | Path to the subdirectory where the unit tests live |
 | `testAttributeRegex` | `\[ *(Fact\|Theory) *\]` | The regular expression used to find the tests. This is usually the attribute which decorates your tests cases. Default value is for xUnit. |
 | `outputFile` | `test-count-csv` | The output csv file, will be stored in the current directory |

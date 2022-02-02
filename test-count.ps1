@@ -2,7 +2,7 @@ $e2ePath = "Tests/E2E"
 $integrationPath = "Tests/Integration" 
 $unitPath = "Tests/Unit"
 
-$testAttributeRegex = "\[ *(Fact|RetryFact|Theory) *\]"
+$testAttributeRegex = "\[ *(Fact|Theory) *\]"
 
 $outputFile = "test-count.csv"
 $fullOutputPath = Join-Path -Path $PWD -ChildPath $outputFile
