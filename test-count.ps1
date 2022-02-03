@@ -84,5 +84,5 @@ try {
 finally {
     Pop-Location
 }
-Write-Host "Changed to repository directory: $PWD"
+Write-Host "Changed to original directory: $PWD"
 Write-Host "Done, check $FullOutputPath"
