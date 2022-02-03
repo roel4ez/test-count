@@ -17,26 +17,41 @@ Clear-Content -Path $fullOutputPath -ErrorAction SilentlyContinue
 Push-Location $gitRepoPath
 Write-Host "Changed to repository directory: " $PWD
 
-Write-Host "Counting E2E tests..."
+Out-TestCountCsv 'Integration' $integrationPath $fullOutputPath
+Out-TestCountCsv 'E2E' $e2ePath $fullOutputPath
+Out-TestCountCsv 'Unit' $unitPath $fullOutputPath
 
-git log '--pretty=%h %ai' $e2ePath |
-  ForEach-Object { $t = $_ -split ' ', 4;
-      New-Object psobject -Property @{ Type = "E2E"; Commit = $t[0]; Date = $t[1]; TestCount = $(git grep -E $testAttributeRegex $t[0] -- $e2ePath\*.cs  | Measure-Object | Select-Object -ExpandProperty Count) }
-  } | ConvertTo-Csv | Out-File -Path $fullOutputPath
+Pop-Location
 
-Write-Host "Counting Integration tests..."
+Write-Host "Done, Curent Directory: " + $PWD
 
-git log '--pretty=%h %ai' $integrationPath |
-  ForEach-Object { $t = $_ -split ' ', 4;
-      New-Object psobject -Property @{ Type = "Integration"; Commit = $t[0]; Date = $t[1]; TestCount = $(git grep -E $testAttributeRegex $t[0] -- $e2ePath\*.cs  | Measure-Object | Select-Object -ExpandProperty Count) }
-  } | ConvertTo-Csv | Select-Object -Skip 1 | Out-File -Append -Path $fullOutputPath
+function Out-TestCountCsv
+{
+  param ([string]$type,
+         [string]$path,
+         [string]$csvPath)
 
-Write-Host "Counting Unit tests..."
+  Write-Verbose "Counting $type tests..."
 
-git log '--pretty=%h %ai' $unitPath |
-  ForEach-Object { $t = $_ -split ' ', 4;
-      New-Object psobject -Property @{ Type = "Unit"; Commit = $t[0]; Date = $t[1]; TestCount = $(git grep -E $testAttributeRegex $t[0] -- $e2ePath\*.cs  | Measure-Object | Select-Object -ExpandProperty Count) }
-  } | ConvertTo-Csv | Select-Object -Skip 1 | Out-File -Append -Path $fullOutputPath
+  git log '--pretty=%h %ai' $path |
+    ForEach-Object {
+        $t = $_ -split ' ', 4;
+        $count = git grep -E $testAttributeRegex $t[0] -- $path\*.cs |
+            Measure-Object |
+            Select-Object -ExpandProperty Count
+        if ($LASTEXITCODE) { throw }
+        New-Object psobject -Property @{
+          Type = $type;
+          Commit = $t[0];
+          Date = $t[1];
+          TestCount = $count;
+        }
+    } |
+    ConvertTo-Csv |
+    Select-Object -Skip 1 |
+    Out-File -Append -Path $csvPath
+    if ($LASTEXITCODE) { throw }
+}
 
 Pop-Location
 
