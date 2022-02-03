@@ -1,29 +1,43 @@
+<#
+.SYNOPSIS
+    Count number of tests per type in a git repository
+.DESCRIPTION
+    Simple PowerShell script that outputs a csv file of the number of tests, per
+type and per commit. This data can then be used to generate a simple chart.
+#>
+
 [CmdletBinding()]
 param (
-  [string]$GitRepoPath = '.',
-  [string]$E2ePath = 'Tests/E2E',
-  [string]$IntegrationPath = 'Tests/Integration' ,
-  [string]$UnitPath = 'Tests/Unit',
-  [string]$TestAttributeRegex = '\[ *(Fact|Theory) *\]',
-  [string]$OutputFile = 'test-count.csv'
+  [Parameter(Mandatory=$true, Position=0)]
+  [string]
+  $GitRepoPath #Path to the repository of which tests should be counted
+  
+  ,[Parameter(Mandatory=$false)]
+  [string]
+  $E2ePath = 'Tests/E2E' #Relative path to the directory containing E2E tests (default = Tests/E2E)
+  
+  ,[Parameter(Mandatory=$false)]
+  [string]
+  $IntegrationPath = 'Tests/Integration' #Relative path to the directory containing Integration tests (default = Tests/Integration)
+  
+  ,[Parameter(Mandatory=$false)]
+  [string]
+  $UnitPath = 'Tests/Unit' #Relative path to the directory containing Unit tests  (default = Tests/Unit)
+  
+  ,[Parameter(Mandatory=$false)]
+  [string]
+  $FileExtensionWildcard = '*.cs' #File extension of the files containing tests  (default = *.cs)
+  
+  ,[Parameter(Mandatory=$false)]
+  [string]
+  $TestAttributeRegex = '\[ *(Fact|Theory) *\]' #Regex of attributes that define tests in your setup  (default = \[ *(Fact|Theory) *\])
+  
+  ,[Parameter(Mandatory=$false)]
+  [string]
+  $OutputFile = 'test-count.csv' #Name of the output file, will be stored in current directory (default = test-count.csv)
 )
 
 $ErrorActionPreference = 'Stop'
-
-$fullOutputPath = Join-Path -Path $PWD -ChildPath $outputFile
-
-Write-Host "Current directory: " $PWD " OutputPath: " $fullOutputPath
-Clear-Content -Path $fullOutputPath -ErrorAction SilentlyContinue
-Push-Location $gitRepoPath
-Write-Host "Changed to repository directory: " $PWD
-
-Out-TestCountCsv 'Integration' $integrationPath $fullOutputPath
-Out-TestCountCsv 'E2E' $e2ePath $fullOutputPath
-Out-TestCountCsv 'Unit' $unitPath $fullOutputPath
-
-Pop-Location
-
-Write-Host "Done, Curent Directory: " + $PWD
 
 function Out-TestCountCsv
 {
@@ -31,12 +45,12 @@ function Out-TestCountCsv
          [string]$path,
          [string]$csvPath)
 
-  Write-Verbose "Counting $type tests..."
+Write-Host "Counting $type tests..."
 
-  git log '--pretty=%h %ai' $path |
+git log '--pretty=%h %ai' $path |
     ForEach-Object {
         $t = $_ -split ' ', 4;
-        $count = git grep -E $testAttributeRegex $t[0] -- $path\*.cs |
+        $count = git grep -E $TestAttributeRegex $t[0] -- $path\$FileExtensionWildcard |
             Measure-Object |
             Select-Object -ExpandProperty Count
         if ($LASTEXITCODE) { throw }
@@ -53,6 +67,22 @@ function Out-TestCountCsv
     if ($LASTEXITCODE) { throw }
 }
 
-Pop-Location
+$FullOutputPath = Join-Path -Path $PWD -ChildPath $OutputFile
 
-Write-Host "Done, Curent Directory: " + $PWD
+Write-Host "Current directory: $PWD"
+Write-Host "OutputPath: $FullOutputPath"
+try { 
+    Push-Location -Path $GitRepoPath
+    Write-Host "Changed to repository directory: $PWD"
+    
+    Clear-Content -Path $FullOutputPath -ErrorAction SilentlyContinue
+   
+    Out-TestCountCsv 'Integration' $IntegrationPath $FullOutputPath
+    Out-TestCountCsv 'E2E' $E2ePath $FullOutputPath
+    Out-TestCountCsv 'Unit' $UnitPath $FullOutputPath
+}
+finally {
+    Pop-Location
+}
+Write-Host "Changed to repository directory: $PWD"
+Write-Host "Done, check $FullOutputPath"
