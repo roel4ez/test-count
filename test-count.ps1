@@ -1,12 +1,16 @@
-$e2ePath = "Tests/E2E"
-$integrationPath = "Tests/Integration" 
-$unitPath = "Tests/Unit"
+[CmdletBinding()]
+param (
+  [string]$GitRepoPath = '.',
+  [string]$E2ePath = 'Tests/E2E',
+  [string]$IntegrationPath = 'Tests/Integration' ,
+  [string]$UnitPath = 'Tests/Unit',
+  [string]$TestAttributeRegex = '\[ *(Fact|Theory) *\]',
+  [string]$OutputFile = 'test-count.csv'
+)
 
-$testAttributeRegex = "\[ *(Fact|Theory) *\]"
+$ErrorActionPreference = 'Stop'
 
-$outputFile = "test-count.csv"
 $fullOutputPath = Join-Path -Path $PWD -ChildPath $outputFile
-$gitRepoPath = "C:\sources\lora\iotedge-lorawan"
 
 Write-Host "Current directory: " $PWD " OutputPath: " $fullOutputPath
 Clear-Content -Path $fullOutputPath -ErrorAction SilentlyContinue
